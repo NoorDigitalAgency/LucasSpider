@@ -7,7 +7,7 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-14T02:05:11.715079+00:00'
+last_verified: 2026-10-14T11:13:39.791574+00:00
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
@@ -39,5 +39,7 @@ Navigate by task: [host composition](systems/host-composition.md), [crawl lifecy
 Source scope is commit 495ed7cc49208acaa50de7dcf5ebdec584394000. Its committer evidence time is 2026-04-07T12:57:08+02:00, independently checked from Git metadata; last_verified records the present static audit, and deployment effective time is unknown. The full tracked inventory has 252 paths: all 205 production C# files and 16 technical texts were privately read to EOF. The 24 mixed test/sample C# files and seven fixture/config/opaque paths remain metadata-only boundaries. Supporting matrices retain every path, directory, native operation and typed member; counts do not establish runtime coverage.
 
 All records remain proposed. Exact consumed implementation revisions, live composition, package publication, output permissions and accepting authority remain unknown. The separately reported consumer declaration LucasSpider 2026.1.0 does not identify the immutable implementation consumed by Lucas; this audit does not substitute the current sibling source or inspect consumer/package implementation. Confidence is high for pinned owned static contracts and limited at those boundaries.
+
+Behavioral edge contracts are findable in the task records: mutually exclusive formatter compile arms and concrete selector/time outputs; conditional Linux redial failure; same-reference retry admission followed by cleanup; concrete SQL types/defaults; stored versus applied HTTP version and handler-list composition; and manual release input/pack branches. These are pinned source contracts, with compiler/framework/provider/process/workflow outcomes qualified at their boundaries. See [extraction](capabilities/entity-extraction.md), [selectors](systems/selectors-and-formatters.md), [downloaders](capabilities/browser-file-download.md), [cleanup](capabilities/response-data-flow.md), [SQL generation](systems/entity-storage.md), [HTTP](capabilities/http-download.md) and [release controls](systems/build-package-boundaries.md).
 
 Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.

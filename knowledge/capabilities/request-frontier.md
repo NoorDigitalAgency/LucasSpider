@@ -7,7 +7,7 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-14T02:05:11.715079+00:00'
+last_verified: 2026-10-14T11:13:38.994890+00:00
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
@@ -79,6 +79,9 @@ evidence:
 - repository: lucasspider
   path: src/LucasSpider/Spider.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/Request.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 conflicts: []
 ---
 
@@ -95,5 +98,7 @@ HashSetDuplicateRemover validates nonempty Owner and equality to its initialized
 RequestedQueue rejects timeouts below its minimum, adds by hash, and schedules a hashed-wheel callback carrying the original timestamp. Dequeue removes by hash; a stale callback cannot remove a newer timestamp for that hash. Collected timeouts are copied and the bag exchanged/cleared; disposal clears dictionaries/bags and stops the timer. This is process memory, separate from the scheduler frontier and duplicate history, and no crash recovery is implemented here. [src/LucasSpider/Infrastructure/RequestedQueue.cs:L1–L118](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/RequestedQueue.cs#L1-L118).
 
 Related: [lifecycle](crawl-lifecycle.md), [model cloning](../systems/request-response-models.md) and [follow-request construction](response-data-flow.md). Scheduling concurrency, probabilistic false positives, list edge cases and deployment binding require review; source inspection did not run these paths.
+
+The owned queue scheduler enqueue methods store the admitted Request reference; cloning occurs during dequeue. Consequently an admitted data-flow retry can still share the context request when finally disposes it, clearing headers/properties and disposing binary content before a later clone. Duplicate rejection or earlier dequeue changes that branch. See the complete [retry cleanup contract](response-data-flow.md). [src/LucasSpider/Scheduler/QueueBfsScheduler.cs:L1–L63](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueBfsScheduler.cs#L1-L63), [src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs:L1–L60](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs#L1-L60), [src/LucasSpider/Scheduler/QueueDfsScheduler.cs:L1–L78](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDfsScheduler.cs#L1-L78), [src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs:L1–L78](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs#L1-L78), [src/LucasSpider/Spider.cs:L363–L405](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L363-L405), [src/LucasSpider/Http/Request.cs:L291–L304](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/Request.cs#L291-L304).
 
 Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.

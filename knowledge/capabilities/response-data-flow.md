@@ -7,7 +7,7 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-14T02:05:11.715079+00:00'
+last_verified: 2026-10-14T11:13:38.892297+00:00
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
@@ -61,6 +61,24 @@ evidence:
 - repository: lucasspider
   path: src/LucasSpider/Spider.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/ByteArrayContent.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/SchedulerBase.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueBfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueDfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 conflicts: []
 ---
 
@@ -77,5 +95,7 @@ JsonFileStorage and FileStorage skip empty parsed data, create an owner-specific
 Default storage creation is an explicit helper invoked by a subclass, not automatic data-flow population. It resolves the configured CLR type, requires a factory method, invokes it with IConfiguration and casts the result to IDataFlow; missing type/method/result fail. InitializeDataFlowsAsync sets each logger, awaits initialization and records initialized parsers. Initialization failures stop the application but the method does not rethrow or immediately terminate the whole initialization loop. No flow means the crawl can still run without producing parsed storage. [src/LucasSpider/Spider.cs:L127–L129](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L127-L129), [src/LucasSpider/Spider.cs:L721–L748](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L721-L748), [src/LucasSpider/DataFlow/Storage/StorageUtilities.cs:L1–L42](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/Storage/StorageUtilities.cs#L1-L42).
 
 See [entity extraction](entity-extraction.md), [selectors/formatters](../systems/selectors-and-formatters.md), [entity storage](../systems/entity-storage.md) and [retry lifecycle](crawl-lifecycle.md). Source-local hooks are extensibility, not proof of a deployed pipeline or output access control.
+
+The generic failure branch re-admits the same Request reference held by DataFlowContext, without cloning or increasing RequestedTimes. SchedulerBase passes admitted work to the owned list schedulers, whose enqueue methods retain that reference and whose dequeue methods clone later. Finally disposes the context’s request, clearing Headers and Properties and disposing content. If retry admission succeeds and dequeue cloning has not already occurred, cleanup therefore mutates the queued request; ByteArrayContent.Dispose clears Bytes and a later clone dereferences its length. Duplicate rejection and timing can change this outcome; this is a conditional source interaction, not an observed race or a guarantee of retry corruption. [src/LucasSpider/Spider.cs:L363–L405](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L363-L405), [src/LucasSpider/DataFlow/DataFlowContext.cs:L52–L63](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/DataFlowContext.cs#L52-L63), [src/LucasSpider/DataFlow/DataFlowContext.cs:L192–L200](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/DataFlowContext.cs#L192-L200), [src/LucasSpider/Http/Request.cs:L291–L304](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/Request.cs#L291-L304), [src/LucasSpider/Http/ByteArrayContent.cs:L24–L58](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/ByteArrayContent.cs#L24-L58), [src/LucasSpider/Scheduler/SchedulerBase.cs:L111–L127](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/SchedulerBase.cs#L111-L127), [src/LucasSpider/Scheduler/QueueBfsScheduler.cs:L1–L63](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueBfsScheduler.cs#L1-L63), [src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs:L1–L60](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs#L1-L60), [src/LucasSpider/Scheduler/QueueDfsScheduler.cs:L1–L78](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDfsScheduler.cs#L1-L78), [src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs:L1–L78](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs#L1-L78).
 
 Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.

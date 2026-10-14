@@ -7,7 +7,7 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-14T02:05:11.715079+00:00'
+last_verified: 2026-10-14T11:13:39.140054+00:00
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
@@ -21,6 +21,12 @@ evidence:
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
   path: src/LucasSpider/SpiderOptions.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/DataFlow/DataFlowContext.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/Request.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 conflicts: []
 ---
@@ -38,5 +44,7 @@ Timeout callbacks remove only the pending entry with the same hash and timestamp
 DownloadsRemaining uses request/response counts or a computed elapsed-time allowance based on observed hosts and outstanding work. Empty scheduler handling invokes OnSchedulerEmpty and uses EmptySleepTime before ending; wait/throttle delays often pass the default token rather than the host token. RunAsync catches failures and always calls ExitAsync, which reports exit then stops the host. StopAsync closes the response consumer/queue, awaits the base stop and disposes pending work, data flows, queue and scheduler; it does not explicitly join the agent’s spawned download tasks. [src/LucasSpider/Spider.cs:L521–L646](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L521-L646), [src/LucasSpider/Spider.cs:L132–L139](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L132-L139), [src/LucasSpider/Spider.cs:L752–L760](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L752-L760), [src/LucasSpider/Agent/AgentService.cs:L195–L229](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Agent/AgentService.cs#L195-L229).
 
 These are static branches, not a promise of complete crawling, exactly-once execution, durable restart, timing precision or a hard shutdown bound. See [frontier](request-frontier.md), [data-flow retries](response-data-flow.md) and [transport](../systems/message-queue.md).
+
+Data-flow retry admission passes the same request reference into the scheduler before context cleanup. If admitted and still queued, its headers/properties/content can be changed by that cleanup before dequeue clones it. This is distinct from retry-count/dedup policy and depends on admission and timing; see [response data flow](response-data-flow.md). [src/LucasSpider/Spider.cs:L363–L405](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L363-L405), [src/LucasSpider/DataFlow/DataFlowContext.cs:L192–L200](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/DataFlowContext.cs#L192-L200), [src/LucasSpider/Http/Request.cs:L291–L304](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/Request.cs#L291-L304).
 
 Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.
