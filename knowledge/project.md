@@ -7,11 +7,20 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-10T03:20:42+00:00'
+last_verified: '2026-10-14T02:05:11.715079+00:00'
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
   path: src/LucasSpider/Builder.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Infrastructure/RequestHasher.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/MessageQueue/ServiceCollectionExtensions.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/ServiceCollectionExtensions.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
   path: src/LucasSpider/Spider.cs
@@ -19,14 +28,16 @@ evidence:
 conflicts: []
 ---
 
-# LucasSpider
+# LucasSpider: crawl host, frontier, workers and extraction
 
-LucasSpider exposes an extensible crawling host: `Builder.CreateBuilder` registers a supplied Spider type as an `IHostedService`; `CreateDefaultBuilder` additionally registers message queue and statistics services. `Spider` derives from `BackgroundService` and requires an `InitializeAsync` implementation. Evidence: `src/LucasSpider/Builder.cs:69–94`, `src/LucasSpider/Spider.cs:26–27,113`.
+LucasSpider is an extensible crawling library. A supplied Spider subclass provides InitializeAsync; Builder registers it as an IHostedService and composes the downloader agent, hashing and configuration services. CreateDefaultBuilder additionally registers the owned in-process message queue and statistics store/service. A scheduler still needs an explicit registration. These are owned registration contracts; a caller can compose additional or replacement services. [src/LucasSpider/Builder.cs:L69–L94](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Builder.cs#L69-L94), [src/LucasSpider/Builder.cs:L150–L175](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Builder.cs#L150-L175), [src/LucasSpider/Scheduler/ServiceCollectionExtensions.cs:L1–L35](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/ServiceCollectionExtensions.cs#L1-L35), [src/LucasSpider/MessageQueue/ServiceCollectionExtensions.cs:L1–L14](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/MessageQueue/ServiceCollectionExtensions.cs#L1-L14).
 
-The inspected lifecycle initializes the scheduler, invokes the subclass initializer, initializes data flows, loads request suppliers, registers response consumption, and enters dispatch. Evidence: `src/LucasSpider/Spider.cs:234–252`.
+The crawl begins by generating its routing identity, starting statistics, initializing the scheduler, invoking the subclass initializer, initializing data flows, loading suppliers and registering response consumption before dispatch. Requests pass through admission, hashing/deduplication, pending timeout tracking, serialization and an agent downloader; correlated responses run ordered data flows and admit follow requests. [src/LucasSpider/Spider.cs:L234–L252](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L234-L252), [src/LucasSpider/Spider.cs:L363–L403](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L363-L403), [src/LucasSpider/Spider.cs:L650–L718](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L650-L718), [src/LucasSpider/Infrastructure/RequestHasher.cs:L1–L33](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/RequestHasher.cs#L1-L33).
 
-Scope: this pinned library source, not a deployed crawl, consumer application, or current package release. Source effective time is the commit timestamp 2026-04-07T12:57:08+02:00; actual deployment effective time is unknown. Lucas consumer compatibility and its consumed source pin remain unknown; no consumer source or KB was read.
+Navigate by task: [host composition](systems/host-composition.md), [crawl lifecycle](capabilities/crawl-lifecycle.md), [request frontier](capabilities/request-frontier.md), [HTTP download](capabilities/http-download.md), [browser/file alternatives](capabilities/browser-file-download.md), [response data flow](capabilities/response-data-flow.md), [entity extraction](capabilities/entity-extraction.md), [selectors and formatters](systems/selectors-and-formatters.md), [entity persistence](systems/entity-storage.md), [proxy rotation](systems/proxy-rotation.md), [message transport](systems/message-queue.md), [agents and statistics](systems/agents-and-statistics.md), [request/response models](systems/request-response-models.md), [build and dependency boundaries](systems/build-package-boundaries.md), [terms](vocabulary/crawl-terms.md), [stewardship](governance/ownership.md) and [open questions](decisions/conflicts-and-open-questions.md).
 
-Confidence: high for the cited static structure; runtime behavior and deployment are unverified. Related records: [crawl lifecycle](capabilities/crawl-lifecycle.md), [frontier](capabilities/request-frontier.md), [data flow](capabilities/response-data-flow.md), [download](capabilities/http-download.md), [queue](systems/message-queue.md).
+Source scope is commit 495ed7cc49208acaa50de7dcf5ebdec584394000. Its committer evidence time is 2026-04-07T12:57:08+02:00, independently checked from Git metadata; last_verified records the present static audit, and deployment effective time is unknown. The full tracked inventory has 252 paths: all 205 production C# files and 16 technical texts were privately read to EOF. The 24 mixed test/sample C# files and seven fixture/config/opaque paths remain metadata-only boundaries. Supporting matrices retain every path, directory, native operation and typed member; counts do not establish runtime coverage.
 
-All source citations in this record refer to commit `495ed7cc49208acaa50de7dcf5ebdec584394000`. Observation: 2026-10-10T03:20:42+00:00. Method: static pinned-native-blob comparison, with a payload-scrubbed subset graph for discovery. Freshness: until overridden or removed; any cited-path or relevant pin change requires revalidation. Historical attribution is shared by zlzforever and Sojaner; current accepting steward is unknown.
+All records remain proposed. Exact consumed implementation revisions, live composition, package publication, output permissions and accepting authority remain unknown. The separately reported consumer declaration LucasSpider 2026.1.0 does not identify the immutable implementation consumed by Lucas; this audit does not substitute the current sibling source or inspect consumer/package implementation. Confidence is high for pinned owned static contracts and limited at those boundaries.
+
+Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.

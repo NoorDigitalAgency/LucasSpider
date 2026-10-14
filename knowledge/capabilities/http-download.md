@@ -7,34 +7,60 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-10T03:20:42+00:00'
+last_verified: '2026-10-14T02:05:11.715079+00:00'
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
-  path: src/LucasSpider/Downloader/HttpClientDownloader.cs
+  path: src/LucasSpider/Agent/AgentService.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
   path: src/LucasSpider/Downloader/DownloaderOptions.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
+  path: src/LucasSpider/Downloader/HttpClientDownloader.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Extensions/UriExtensions.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/ExtraHttpStatusCode.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/HeaderUtilities.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/HttpResponseMessageExtensions.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
   path: src/LucasSpider/Http/Request.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
-  path: src/LucasSpider/Agent/AgentService.cs
+  path: src/LucasSpider/Http/Response.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Infrastructure/DefaultHttpMessageHandlerBuilder.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Proxy/ProxyHttpMessageHandlerBuilder.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/ServiceCollectionExtensions.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 conflicts: []
 ---
 
-# HTTP download and redirect metadata
+# HTTP conversion, redirects and failure responses
 
-AgentService handles a Request by calling its injected downloader, assigns response.Agent, and publishes the response using the request Owner as routing input. Evidence: `src/LucasSpider/Agent/AgentService.cs:146–170`.
+AgentService invokes its injected IDownloader, returns without publishing if it yields null, otherwise assigns response.Agent and publishes to the request Owner route. HttpClientDownloader converts the request, chooses a host-named client or asks the proxy service for one, sets client timeout from Request.Timeout and adds the supplied UserAgent. Its send hook uses ResponseHeadersRead without a caller cancellation token. [src/LucasSpider/Agent/AgentService.cs:L146–L170](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Agent/AgentService.cs#L146-L170), [src/LucasSpider/Downloader/HttpClientDownloader.cs:L36–L75](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Downloader/HttpClientDownloader.cs#L36-L75), [src/LucasSpider/Downloader/HttpClientDownloader.cs:L154–L190](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Downloader/HttpClientDownloader.cs#L154-L190).
 
-HttpClientDownloader constructs an HttpRequestMessage, creates a client, sends it with ResponseHeadersRead, and follows status codes 301 through 308 when a Location is present, up to MaximumAllowedRedirects. It creates a failed response when that limit is exceeded. Source default MaximumAllowedRedirects is 5. Evidence: `src/LucasSpider/Downloader/HttpClientDownloader.cs:36–108,154–158`, `src/LucasSpider/Downloader/DownloaderOptions.cs:15`.
+The manual redirect loop treats status 301 through 308 with a Location as redirecting, up to MaximumAllowedRedirects (source default 5). It clones the original request for each hop and resolves a relative Location against the original request URI, preserving the original method/content/headers; this is not a general browser redirect policy or a credential stripping contract. Exceeding the limit returns a failed response. The owned default handler separately sets AllowAutoRedirect to the inverse of TrackRedirects and applies the framework automatic redirect limit; the proxy handler builder does not set those two properties. Therefore manual-hop visibility depends on the actual handler composition. [src/LucasSpider/Downloader/HttpClientDownloader.cs:L76–L122](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Downloader/HttpClientDownloader.cs#L76-L122), [src/LucasSpider/Downloader/DownloaderOptions.cs:L1–L29](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Downloader/DownloaderOptions.cs#L1-L29), [src/LucasSpider/Infrastructure/DefaultHttpMessageHandlerBuilder.cs:L1–L67](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/DefaultHttpMessageHandlerBuilder.cs#L1-L67), [src/LucasSpider/Proxy/ProxyHttpMessageHandlerBuilder.cs:L1–L62](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Proxy/ProxyHttpMessageHandlerBuilder.cs#L1-L62), [src/LucasSpider/Extensions/UriExtensions.cs:L1–L12](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Extensions/UriExtensions.cs#L1-L12).
 
-The ordinary conversion path sets response RequestHash, Version, Redirects, TimeToHeaders, TargetUrl and Elapsed. A non-null result from the overridable HandleAsync returns earlier after version normalization; these assignments are not guaranteed for overrides. Exceptions become failed responses and request/response message collections are disposed in finally. Evidence: `src/LucasSpider/Downloader/HttpClientDownloader.cs:113–151,188–191`.
+On the ordinary path the downloader buffers content through ToResponseAsync and sets RequestHash, Version, Redirects, TimeToHeaders, TargetUrl and Elapsed. Elapsed is based on the stopwatch restarted for the final send, not a guaranteed entire-chain duration. A non-null overridable HandleAsync result returns earlier after version normalization; the remaining ordinary metadata assignments are not guaranteed on that branch. Request and response messages are disposed in finally, and caught exceptions become failed responses. [src/LucasSpider/Downloader/HttpClientDownloader.cs:L124–L150](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Downloader/HttpClientDownloader.cs#L124-L150), [src/LucasSpider/Http/HttpResponseMessageExtensions.cs:L1–L34](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/HttpResponseMessageExtensions.cs#L1-L34).
 
-Client creation obtains a proxy when configured, otherwise uses the request host for the named client, sets timeout from Request.Timeout, and applies an explicit UserAgent. Request conversion copies supplied headers and supports the inspected string/byte content branches. Evidence: `src/LucasSpider/Downloader/HttpClientDownloader.cs:160–185`, `src/LucasSpider/Http/Request.cs:188–238`.
+Request conversion copies dictionary headers without validation and supports owned string/byte content for its allowed body methods. Content header copying currently addresses httpRequestMessage.Content before the new local content is assigned; a nonempty content-header collection can therefore fail at that access and be converted by the downloader catch. Response failure creation distinguishes timeout exceptions, redirect-message matches, HttpRequestException and other messages into local failure status representations; these are not observed remote HTTP statuses. [src/LucasSpider/Http/Request.cs:L188–L238](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/Request.cs#L188-L238), [src/LucasSpider/Http/Response.cs:L153–L177](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/Response.cs#L153-L177), [src/LucasSpider/Http/ExtraHttpStatusCode.cs:L1–L10](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/ExtraHttpStatusCode.cs#L1-L10).
 
-Confidence: high for this HTTP implementation. DNS/network policy, destination allowlists, credential forwarding across redirects, browser downloader behavior, actual HTTP success, and consumer authorization remain unverified. This capability causes outbound network activity when invoked; it is not a proposed read-only MCP operation. URL logging paths exist: `src/LucasSpider/Downloader/HttpClientDownloader.cs:54–65,98–110`. Related: [queue](../systems/message-queue.md), [terms](../vocabulary/crawl-terms.md).
+Default/proxy handlers configure decompression and certificate callback composition. IgnoreServerCertificateError or its source-supported environment/property gate can install a callback that accepts certificates; this is an explicit configuration-dependent trust boundary. No destination/DNS/egress policy, credential redirect protection, live proxy availability or deployed authentication is established by these methods. URL/request logging call sites and header-dumping utilities require deployment redaction/access review. [src/LucasSpider/Infrastructure/DefaultHttpMessageHandlerBuilder.cs:L1–L67](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/DefaultHttpMessageHandlerBuilder.cs#L1-L67), [src/LucasSpider/ServiceCollectionExtensions.cs:L39–L42](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/ServiceCollectionExtensions.cs#L39-L42), [src/LucasSpider/Downloader/HttpClientDownloader.cs:L54–L121](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Downloader/HttpClientDownloader.cs#L54-L121), [src/LucasSpider/Http/HeaderUtilities.cs:L1–L30](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/HeaderUtilities.cs#L1-L30).
 
-All source citations in this record refer to commit `495ed7cc49208acaa50de7dcf5ebdec584394000`. Observation: 2026-10-10T03:20:42+00:00. Method: static pinned-native-blob comparison, with a payload-scrubbed subset graph for discovery. Freshness: until overridden or removed; any cited-path or relevant pin change requires revalidation. Historical attribution is shared by zlzforever and Sojaner; current accepting steward is unknown.
+Confidence is high for owned control flow; HttpClient/handler/provider behavior beyond the inspected calls is an external implementation boundary. See [alternative downloaders](browser-file-download.md), [proxies](../systems/proxy-rotation.md) and [models](../systems/request-response-models.md).
+
+Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.

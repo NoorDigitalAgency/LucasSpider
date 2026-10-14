@@ -7,20 +7,29 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-10T03:20:42+00:00'
+last_verified: '2026-10-14T02:05:11.715079+00:00'
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
-  path: src/LucasSpider/Spider.cs
+  path: src/LucasSpider/Builder.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
-  path: src/LucasSpider/Scheduler/SchedulerBase.cs
+  path: src/LucasSpider/Infrastructure/BloomFilter.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
-  path: src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs
+  path: src/LucasSpider/Infrastructure/HashAlgorithmService.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
-  path: src/LucasSpider/Scheduler/Component/HashSetDuplicateRemover.cs
+  path: src/LucasSpider/Infrastructure/IHashAlgorithmService.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Infrastructure/IRequestHasher.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Infrastructure/MD5HashAlgorithmService.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Infrastructure/MurmurHashAlgorithmService.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
   path: src/LucasSpider/Infrastructure/RequestHasher.cs
@@ -29,23 +38,62 @@ evidence:
   path: src/LucasSpider/Infrastructure/RequestedQueue.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
-  path: src/LucasSpider/DataFlow/DataFlowContext.cs
+  path: src/LucasSpider/Scheduler/Component/BloomFilterDuplicateRemover.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/Component/BloomFilterOptions.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/Component/FakeDuplicateRemover.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/Component/HashSetDuplicateRemover.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/Component/IDuplicateRemover.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/IScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueBfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueDfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/SchedulerBase.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/ServiceCollectionExtensions.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/ServiceCollectionExtensions.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Spider.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 conflicts: []
 ---
 
-# Request frontier and in-flight tracking
+# Scheduling, hashing, deduplication and pending timeouts
 
-Admission assigns Request.Owner from SpiderId.Id, excludes over-limit retries, and applies the depth limit only when Options.Depth is positive. Evidence: `src/LucasSpider/Spider.cs:186–231`. Creating a follow request clones its parent, resets RequestedTimes and Hash, increments Depth, sets Speed and Timestamp, and replaces RequestUri. Evidence: `src/LucasSpider/DataFlow/DataFlowContext.cs:88–99`.
+AddRequestsAsync accepts strings, arrays or an enumerable. String input receives configured timeout/UserAgent; object input retains its supplied values. Owner is overwritten with this spider’s ID after retry/depth/downloader checks. SchedulerBase recomputes the hash, invokes the chosen duplicate remover, pushes nonduplicates and returns the admitted count; total is supplied by that remover. SuccessAsync and FailAsync are no-op hooks in this base. [src/LucasSpider/Spider.cs:L166–L230](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L166-L230), [src/LucasSpider/Scheduler/SchedulerBase.cs:L1–L129](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/SchedulerBase.cs#L1-L129).
 
-SchedulerBase computes a hash, calls the duplicate remover, and pushes requests that pass. The inspected RequestHasher serializes Owner, absolute URI, Method, RequestedTimes and Content to compute the hash; therefore this hash is not solely URL identity. Evidence: `src/LucasSpider/Scheduler/SchedulerBase.cs:111–127`, `src/LucasSpider/Infrastructure/RequestHasher.cs:19–29`.
+RequestHasher serializes Owner, absolute URI, Method, RequestedTimes and Content before applying the injected hash algorithm and Base64 representation. Thus equal URLs are not necessarily equal work, retries can acquire different hashes, and headers/depth/properties are not fields of this hash projection. The host registers MurmurHashAlgorithmService by default; an owned builder extension selects MD5 or a custom request hasher. This correlation/deduplication representation does not authenticate a request. [src/LucasSpider/Infrastructure/RequestHasher.cs:L1–L33](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/RequestHasher.cs#L1-L33), [src/LucasSpider/Builder.cs:L163–L170](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Builder.cs#L163-L170), [src/LucasSpider/ServiceCollectionExtensions.cs:L15–L37](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/ServiceCollectionExtensions.cs#L15-L37), [src/LucasSpider/Infrastructure/HashAlgorithmService.cs:L1–L32](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/HashAlgorithmService.cs#L1-L32), [src/LucasSpider/Infrastructure/MurmurHashAlgorithmService.cs:L1–L20](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/MurmurHashAlgorithmService.cs#L1-L20), [src/LucasSpider/Infrastructure/MD5HashAlgorithmService.cs:L1–L19](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/MD5HashAlgorithmService.cs#L1-L19).
 
-HashSetDuplicateRemover uses an in-memory dictionary keyed by Request.Hash, validates that Owner matches its initialized spider ID, and supports whole-set or individual reset. This is a scheduling invariant, not demonstrated user authorization. Evidence: `src/LucasSpider/Scheduler/Component/HashSetDuplicateRemover.cs:13–39,50–68`.
+The BFS list implementations take/remove from the front and return cloned requests; distinct variants use an injected remover, while nondistinct constructors use FakeDuplicateRemover. Distinct DFS takes the tail in reverse order. The nondistinct QueueDfsScheduler has a different start expression: its inclusive loop can select one extra item when the requested count is met, and at equality can index below the list; removal still uses dequeueCount. It must not be documented as equivalent to the distinct DFS implementation or as a verified correct DFS policy. [src/LucasSpider/Scheduler/QueueBfsScheduler.cs:L1–L63](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueBfsScheduler.cs#L1-L63), [src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs:L1–L60](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs#L1-L60), [src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs:L1–L78](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDistinctDfsScheduler.cs#L1-L78), [src/LucasSpider/Scheduler/QueueDfsScheduler.cs:L1–L78](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/QueueDfsScheduler.cs#L1-L78), [src/LucasSpider/Scheduler/ServiceCollectionExtensions.cs:L1–L35](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/ServiceCollectionExtensions.cs#L1-L35).
 
-QueueDistinctBfsScheduler keeps a List<Request>, takes from its front, removes those entries and returns clones. This describes this implementation only; no default scheduler selection is inferred. Evidence: `src/LucasSpider/Scheduler/QueueDistinctBfsScheduler.cs:15–19,33–57`.
+HashSetDuplicateRemover validates nonempty Owner and equality to its initialized spider ID, stores hashes in a concurrent in-memory dictionary, and supports whole-set or per-request reset. That equality is a routing invariant, not tenant authorization. FakeDuplicateRemover counts calls and returns false. BloomFilterDuplicateRemover uses configurable probabilistic membership, counts newly observed entries and can clear/recreate its filter; per-request reset throws NotImplementedException. Its counter reset assigns the value returned by Interlocked.Exchange back to the field, so a fresh zero count is not guaranteed by that statement. Enabling completed-request resets with this remover can therefore throw. [src/LucasSpider/Scheduler/Component/HashSetDuplicateRemover.cs:L1–L79](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/Component/HashSetDuplicateRemover.cs#L1-L79), [src/LucasSpider/Scheduler/Component/FakeDuplicateRemover.cs:L1–L49](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/Component/FakeDuplicateRemover.cs#L1-L49), [src/LucasSpider/Scheduler/Component/BloomFilterDuplicateRemover.cs:L1–L78](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/Component/BloomFilterDuplicateRemover.cs#L1-L78), [src/LucasSpider/Scheduler/Component/BloomFilterOptions.cs:L1–L8](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/Component/BloomFilterOptions.cs#L1-L8), [src/LucasSpider/Infrastructure/BloomFilter.cs:L1–L481](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/BloomFilter.cs#L1-L481).
 
-RequestedQueue separately tracks dispatched requests by hash, schedules a timeout using Timeout and Timestamp, matches responses by removing their RequestHash, and collects timed-out requests. Evidence: `src/LucasSpider/Infrastructure/RequestedQueue.cs:16–25,32–82`, `src/LucasSpider/Spider.cs:308–310,650–693`.
+RequestedQueue rejects timeouts below its minimum, adds by hash, and schedules a hashed-wheel callback carrying the original timestamp. Dequeue removes by hash; a stale callback cannot remove a newer timestamp for that hash. Collected timeouts are copied and the bag exchanged/cleared; disposal clears dictionaries/bags and stops the timer. This is process memory, separate from the scheduler frontier and duplicate history, and no crash recovery is implemented here. [src/LucasSpider/Infrastructure/RequestedQueue.cs:L1–L118](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/RequestedQueue.cs#L1-L118).
 
-Confidence: high for the inspected implementations. Duplicate state and pending state are distinct concepts. Persistence, fairness, global deduplication, restart recovery and all scheduler variants are unverified. Related: [lifecycle](crawl-lifecycle.md), [terms](../vocabulary/crawl-terms.md).
+Related: [lifecycle](crawl-lifecycle.md), [model cloning](../systems/request-response-models.md) and [follow-request construction](response-data-flow.md). Scheduling concurrency, probabilistic false positives, list edge cases and deployment binding require review; source inspection did not run these paths.
 
-All source citations in this record refer to commit `495ed7cc49208acaa50de7dcf5ebdec584394000`. Observation: 2026-10-10T03:20:42+00:00. Method: static pinned-native-blob comparison, with a payload-scrubbed subset graph for discovery. Freshness: until overridden or removed; any cited-path or relevant pin change requires revalidation. Historical attribution is shared by zlzforever and Sojaner; current accepting steward is unknown.
+Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.

@@ -7,41 +7,62 @@ owner: zlzforever, Sojaner
 status: proposed
 classification: sensitive-metadata
 source_commit: 495ed7cc49208acaa50de7dcf5ebdec584394000
-last_verified: '2026-10-10T03:20:42+00:00'
+last_verified: '2026-10-14T02:05:11.715079+00:00'
 expiry_policy: until-overridden-or-removed
 evidence:
 - repository: lucasspider
-  path: src/LucasSpider/Http/Request.cs
-  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
-- repository: lucasspider
-  path: src/LucasSpider/Http/Response.cs
+  path: src/LucasSpider/Agent/AgentService.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
   path: src/LucasSpider/DataFlow/DataFlowContext.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
+  path: src/LucasSpider/DataFlow/Parser/Formatter.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/DataFlow/Parser/Model.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/DataFlow/Storage/EntityBase.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/DataFlow/Storage/TableMetadata.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/Request.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/RequestPolicy.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Http/Response.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
   path: src/LucasSpider/Infrastructure/RequestHasher.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Infrastructure/RequestedQueue.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Scheduler/SchedulerBase.cs
+  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
+- repository: lucasspider
+  path: src/LucasSpider/Selector/ISelectable.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 - repository: lucasspider
   path: src/LucasSpider/Spider.cs
   revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
-- repository: lucasspider
-  path: src/LucasSpider/Agent/AgentService.cs
-  revision: 495ed7cc49208acaa50de7dcf5ebdec584394000
 conflicts: []
 ---
 
-# Crawl terminology within LucasSpider
+# Crawl terms and source-local representations
 
-| Term | Scoped meaning and evidence | Confidence |
-| --- | --- | --- |
-| Request | Crawl work description carrying URI, method, content, headers, routing and retry/depth fields; `src/LucasSpider/Http/Request.cs:40–134` | High, source-local |
-| Owner | Request field assigned from SpiderId.Id, then used to route responses; `src/LucasSpider/Spider.cs:225`, `src/LucasSpider/Agent/AgentService.cs:157–158` | High, routing identity only |
-| Hash / RequestHash | Request hash depends on Owner, absolute URI, Method, RequestedTimes and Content; Response.RequestHash matches pending requests; `src/LucasSpider/Infrastructure/RequestHasher.cs:19–29`, `src/LucasSpider/Spider.cs:308–310` | High, correlation representation, not global URL synonym |
-| Agent | Download worker identity copied onto a response and successful matched request; `src/LucasSpider/Agent/AgentService.cs:155`, `src/LucasSpider/Spider.cs:314` | High, source-local |
-| FollowRequests | Requests collected while processing a response and returned to scheduler admission; `src/LucasSpider/DataFlow/DataFlowContext.cs:41,65–98`, `src/LucasSpider/Spider.cs:379` | High, source-local |
-| DataFlowContext | Per-response request/response/options/services container with parsed data and follow requests; `src/LucasSpider/DataFlow/DataFlowContext.cs:14–62,147–176` | High, source-local |
+Request is a work description with URI/method/content/headers plus routing, retry/depth and timeout fields. Owner is assigned from SpiderId.Id and routes responses; it is not authenticated caller, tenant ownership or permission to crawl. Hash depends on Owner, absolute URI, Method, RequestedTimes and Content; RequestHash correlates the response with pending work. Agent is the worker identity copied to a response and successful request, while Downloader is a routing/implementation name. [src/LucasSpider/Http/Request.cs:L1–L331](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/Request.cs#L1-L331), [src/LucasSpider/Http/Response.cs:L1–L213](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/Response.cs#L1-L213), [src/LucasSpider/Infrastructure/RequestHasher.cs:L1–L33](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/RequestHasher.cs#L1-L33), [src/LucasSpider/Spider.cs:L225–L230](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L225-L230), [src/LucasSpider/Agent/AgentService.cs:L146–L158](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Agent/AgentService.cs#L146-L158).
 
-These are code/domain meanings and representations inside the pinned library. No UI display-label mapping or cross-repository synonym has been established. In particular, Owner does not establish tenant ownership, authenticated caller identity or permission to crawl. Related: [frontier](../capabilities/request-frontier.md), [data flow](../capabilities/response-data-flow.md).
+Scheduler is the undispatched frontier; RequestedQueue is pending work with timestamp-aware timeout callbacks; duplicate remover is a separate memory/probabilistic history. RetriedTimes is an admission ceiling on RequestedTimes, not a universal bound on every failure branch. Chained routes subsequent agent-bound work to that agent, while Random uses the downloader route. Speed/Batch are dispatch controls, not a proven simultaneous downloader limit. [src/LucasSpider/Scheduler/SchedulerBase.cs:L1–L129](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Scheduler/SchedulerBase.cs#L1-L129), [src/LucasSpider/Infrastructure/RequestedQueue.cs:L1–L118](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Infrastructure/RequestedQueue.cs#L1-L118), [src/LucasSpider/Http/RequestPolicy.cs:L1–L15](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Http/RequestPolicy.cs#L1-L15), [src/LucasSpider/Spider.cs:L650–L702](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L650-L702), [src/LucasSpider/Spider.cs:L392–L399](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L392-L399).
 
-All source citations in this record refer to commit `495ed7cc49208acaa50de7dcf5ebdec584394000`. Observation: 2026-10-10T03:20:42+00:00. Method: static pinned-native-blob comparison, with a payload-scrubbed subset graph for discovery. Freshness: until overridden or removed; any cited-path or relevant pin change requires revalidation. Historical attribution is shared by zlzforever and Sojaner; current accepting steward is unknown.
+DataFlowContext is the per-response scope carrying request/response/options/services, serialized bytes, mutable properties/data and FollowRequests. Selectable represents HTML/JSON/XML/text or unsupported content; Selector selects a node/value; Formatter transforms a field and can have side effects. Model<T> reflects extraction attributes. IEntity/TableMetadata/Column/Schema describe storage metadata, not inspected customer records or a deployed database schema. FollowRequests return through normal admission after successful ordered flows. [src/LucasSpider/DataFlow/DataFlowContext.cs:L1–L232](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/DataFlowContext.cs#L1-L232), [src/LucasSpider/Selector/ISelectable.cs:L1–L73](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Selector/ISelectable.cs#L1-L73), [src/LucasSpider/DataFlow/Parser/Model.cs:L1–L110](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/Parser/Model.cs#L1-L110), [src/LucasSpider/DataFlow/Parser/Formatter.cs:L1–L53](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/Parser/Formatter.cs#L1-L53), [src/LucasSpider/DataFlow/Storage/EntityBase.cs:L1–L186](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/Storage/EntityBase.cs#L1-L186), [src/LucasSpider/DataFlow/Storage/TableMetadata.cs:L1–L79](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/DataFlow/Storage/TableMetadata.cs#L1-L79), [src/LucasSpider/Spider.cs:L363–L384](https://github.com/NoorDigitalAgency/LucasSpider/blob/495ed7cc49208acaa50de7dcf5ebdec584394000/src/LucasSpider/Spider.cs#L363-L384).
+
+Names remain scoped to this library. No UI display-label mapping, cross-repository synonym, global identity equivalence, billing interpretation or package-to-consumer compatibility agreement was established. See [project navigation](../project.md) and [unknowns](../decisions/conflicts-and-open-questions.md).
+
+Confidence: high for the cited pinned owned source; external/runtime/authority boundaries are explicitly unknown. Freshness: revalidate affected source and consumed pins when changed. Proposed status is not human acceptance.
